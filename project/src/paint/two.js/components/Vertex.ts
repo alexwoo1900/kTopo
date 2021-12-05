@@ -57,7 +57,6 @@ export class Vertex extends DrawableNode {
 
     private _shape              : Two.Circle | null     = null;
     private _dragLine           : Two.Line | null       = null;
-    
     protected _canvas           : Canvas | null         = null;
     protected _skin             : Two.Group | null      = null;
     protected _style            : Style | null          = null;
@@ -102,8 +101,9 @@ export class Vertex extends DrawableNode {
     }
 
     _createSkin() {
+        this._skin = this._canvas!.two.makeGroup();
         this.createOrUpdateSkin(this._canvas!.two, this._style!.normal);
-        this._skin = this._canvas!.two.makeGroup(this._shape!);
+        this._skin.add(this._shape!);
         this._skin.translation.set(this.x, this.y);
         this.position.change((x: number, y: number) => {
             this._skin!.translation.set(x, y);
@@ -118,8 +118,7 @@ export class Vertex extends DrawableNode {
         e.preventDefault();
         
         if (this._usePhysicsEngine) {
-            this._canvas!.two
-                .unbind("update", this._applyPhysicsEngine);
+            this._canvas!.two.unbind("update", this._applyPhysicsEngine);
         }
 
         let sf = this._canvas!.clientToSurface(e.clientX!, e.clientY!);
@@ -143,16 +142,23 @@ export class Vertex extends DrawableNode {
                 this._canvas!.add(new Edge(this._canvas!.dragStartVertex, this._canvas!.dragEndVertex));
             } else if (this._canvas!.dragStartVertex && !this._canvas!.dragEndVertex) {
                 let target = this._canvas!.getCoordCollision(new Two.Vector(e.clientX!, e.clientY!), DrawableNodeType.Vertex);
+
                 if (target) {
-                    this._canvas!.dragEndVertex = target;
+                    if (target != this._canvas!.dragStartVertex) {
+                        this._canvas!.dragEndVertex = target;
+                        this._canvas!.add(new Edge(this._canvas!.dragStartVertex, this._canvas!.dragEndVertex));
+                    } else {
+                        // two selected vertices are the same vertex, do nothing
+                    }
                 } else {
                     let sf = this._canvas!.clientToSurface(e.clientX!, e.clientY!);
                     this._canvas!.dragEndVertex = new Vertex(sf.x, sf.y);
                     this._canvas!.add(this._canvas!.dragEndVertex!);
+                    this._canvas!.add(new Edge(this._canvas!.dragStartVertex, this._canvas!.dragEndVertex));
                 }
-                this._canvas!.add(new Edge(this._canvas!.dragStartVertex, this._canvas!.dragEndVertex));
             }
 
+            // clear selected vertices and dragline
             this._canvas!.dragStartVertex = null;
             this._canvas!.dragEndVertex = null;
             if (this._dragLine) {
@@ -166,8 +172,7 @@ export class Vertex extends DrawableNode {
             .off("mouseup", this._dragEnd);
 
         if (this._usePhysicsEngine) {
-            this._canvas!.two
-                .bind("update", this._applyPhysicsEngine!);
+            this._canvas!.two.bind("update", this._applyPhysicsEngine!);
         }
     };
 

@@ -23,5 +23,5 @@ Animation
 ![operation](https://github.com/alexwoo1900/ktopo/blob/main/docs/assets/ktopo_animation.gif)
 
 ## How to run kTopo
-1. After installed node library, please replace the original file with the one in node_modules under kTopo.  
+1. After installed node library, please replace the original file with the one in node_modules_replace under kTopo.  
 2. Compile and run the project according to the conventional webpack + typescript.  

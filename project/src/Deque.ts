@@ -1,25 +1,25 @@
 export class Deque<T> {
-    private _nodes: Array<T> = new Array<T>();
+    private _data: Array<T> = new Array<T>();
 
     constructor() {
 
     }
 
     get size(): number {
-        return this._nodes.length;
+        return this._data.length;
     }
 
     at(i: number): T {
-        return this._nodes[i];
+        return this._data[i];
     }
 
     empty(): boolean {
-        return this._nodes.length == 0;
+        return this._data.length == 0;
     }
 
     front(): T | undefined {
         if (!this.empty()) {
-            return this._nodes[0];
+            return this._data[0];
         } else {
             return undefined;
         }
@@ -27,29 +27,29 @@ export class Deque<T> {
 
     back(): T | undefined {
         if (!this.empty()) {
-            return this._nodes[this._nodes.length - 1];
+            return this._data[this._data.length - 1];
         } else {
             return undefined;
         }
     }
 
     pushBack(elem: T) {
-        this._nodes.push(elem);
+        this._data.push(elem);
     }
 
     pushFront(elem: T) {
-        this._nodes.unshift(elem);
+        this._data.unshift(elem);
     }
 
     popBack(): T | undefined{
-        return this._nodes.pop();
+        return this._data.pop();
     }
 
     popFront(): T | undefined {
-        return this._nodes.shift();
+        return this._data.shift();
     }
 
     clear() {
-        this._nodes.length = 0;
+        this._data.length = 0;
     }
 }

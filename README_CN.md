@@ -22,5 +22,5 @@ A Minimalist topology Library - 一个极简拓扑库
 ![operation](https://github.com/alexwoo1900/kTopo/blob/main/docs/assets/ktopo_animation.gif)
 
 ## 如何运行项目代码
-1. 用户在安装完node库依赖后，请用本工程的node_modules文件夹中的文件替换对应原文件。  
+1. 用户在安装完node库依赖后，请用本工程的node_modules_replace文件夹中的文件替换对应原文件。  
 2. 按常规的Webpack + Typescript方法编译并运行该项目即可。  
