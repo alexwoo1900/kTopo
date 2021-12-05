@@ -37,8 +37,8 @@ let defaultStyle = {
         "fill"          : "#0099ff",
         "opacity"       : 1,
         "scale"         : 1,
-        "dlStroke"      : "#00ff33",
-        "dlLineWidth"   : 6,
+        "dlStroke"      : "#0099ff",
+        "dlLineWidth"   : 2,
         "dlCap"         : "round"
     },
     "mouseenter": {
