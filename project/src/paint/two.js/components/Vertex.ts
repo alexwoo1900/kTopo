@@ -6,7 +6,7 @@ import { DrawableNodeType, DrawableNode } from "../../../DrawableNode";
 import { CanvasEditMode } from "../../../DrawableCanvas";
 import { Canvas } from "./Canvas";
 import { Edge } from "./Edge";
-import { CoordLabel } from "./Text";
+import { ComponentLabel } from "./Label";
 
 interface VertexStyle {
     x?          : number,
@@ -37,7 +37,7 @@ let defaultStyle = {
         "fill"          : "#0099ff",
         "opacity"       : 1,
         "scale"         : 1,
-        "dlStroke"      : "#0099ff",
+        "dlStroke"      : "#cccccc",
         "dlLineWidth"   : 2,
         "dlCap"         : "round"
     },
@@ -51,7 +51,7 @@ export class Vertex extends DrawableNode {
     /**
      * static variables
      **/ 
-    readonly defaultLabel       : CoordLabel;
+    readonly label              : ComponentLabel;
     readonly originalPosition   : Point2D;
     readonly body               : Particle;     // default body type: particle
 
@@ -61,11 +61,13 @@ export class Vertex extends DrawableNode {
     protected _skin             : Two.Group | null      = null;
     protected _style            : Style | null          = null;
     private _usePhysicsEngine   : boolean               = true;
-    private _applyPhysicsEngine  : (() => any) | null   = null;
+    private _applyPhysicsEngine : (() => any) | null    = null;
+
+    private _name               : string                = "";
 
     constructor(x: number, y: number) {
         super(DrawableNodeType.Vertex);
-        this.defaultLabel = new CoordLabel(this);
+        this.label = new ComponentLabel(this);
         this.originalPosition = new Point2D(x, y);
         this.body = new Particle();
         this.body.position.set(x, y);
@@ -75,10 +77,12 @@ export class Vertex extends DrawableNode {
     get x()                 { return this.body.position.x; }
     get y()                 { return this.body.position.y; }
     get position()          { return this.body.position; }
-
+    get name()              { return this._name; }
     get neighbours()        { return this._canvas!.getNeighbours(this); }
     get usePhysicsEngine()  { return this._usePhysicsEngine; }
-    set usePhysicsEngine(v: boolean) { this._usePhysicsEngine = v; }
+
+    set name(s: string)                 { this._name = s; }
+    set usePhysicsEngine(v: boolean)    { this._usePhysicsEngine = v; }
     
     _loadDefaultStyle() {
         this._style = defaultStyle;
@@ -127,6 +131,7 @@ export class Vertex extends DrawableNode {
         } else if (this._canvas!.editMode == CanvasEditMode.InsertEdge) {
             if (!this._dragLine) {
                 this.createOrUpdateDragLineSkin(this._canvas!.two, this._style!.normal, this.x, this.y, sf.x, sf.y);
+                this._canvas!.addToMisc(this._dragLine!);
             } else {
                 this._dragLine.vertices[1].set(sf.x, sf.y);
             }
@@ -162,7 +167,7 @@ export class Vertex extends DrawableNode {
             this._canvas!.dragStartVertex = null;
             this._canvas!.dragEndVertex = null;
             if (this._dragLine) {
-                this._canvas!.two.remove(this._dragLine);
+                this._canvas!.removeFromMisc(this._dragLine);
                 this._dragLine = null;
             }
         }

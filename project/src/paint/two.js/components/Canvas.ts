@@ -11,7 +11,7 @@ import { DrawableNodeType, DrawableNode } from "../../../DrawableNode";
 import { Grid } from "./Grid";
 import { Vertex } from "./Vertex";
 import { Edge } from "./Edge";
-import { CoordLabel, WeightLabel } from "./Text";
+import { ComponentLabel } from "./Label";
 import { Button } from "../misc/Widget";
 import { Particle } from "../../../physics/2d/particle/Particle";
 import { ParticleForceRegistry } from "../../../physics/2d/particle/ForceGenerator";
@@ -47,7 +47,7 @@ interface TwoParams {
     height?     : number
 }
 
-type Component = Vertex | Edge | CoordLabel | WeightLabel | Button; 
+type Component = Vertex | Edge | ComponentLabel | Button; 
 
 export class Canvas extends DrawableCanvas {
     protected _graph            : AdjGraph          = new AdjGraph();
@@ -58,9 +58,10 @@ export class Canvas extends DrawableCanvas {
     protected _usePhysicsEngine : boolean           = true;
     private _zui                : Two.ZUI | null    = null;
     private _layers             : {
-                                    V: Two.Group,
+                                    M: Two.Group,   // for misc
                                     E: Two.Group,
-                                    T: Two.Group,
+                                    V: Two.Group,
+                                    L: Two.Group,
                                     W: Two.Group
                                 } | null        = null;
     private _panStartPos        : Two.Vector | null = null;
@@ -124,9 +125,10 @@ export class Canvas extends DrawableCanvas {
         this._zui = new Two.ZUI(this._two.scene);
         this._zui.addLimits(0.06, 8);
         this._layers = {
+            "M": this._two.makeGroup(),
             "E": this._two.makeGroup(),
             "V": this._two.makeGroup(),
-            "T": this._two.makeGroup(),
+            "L": this._two.makeGroup(),
             "W": this._two.makeGroup(),
         }
         this._initialized = true;
@@ -190,10 +192,18 @@ export class Canvas extends DrawableCanvas {
         }, false);
     }
 
-    showVertexLabel() { this._vertices.forEach((vertex: Vertex) => vertex.defaultLabel.show()); }
-    hideVertexLabel() { this._vertices.forEach((vertex: Vertex) => vertex.defaultLabel.hide()); }
-    showEdgeLabel() { this._edges.forEach((edge: Edge) => edge.defaultLabel.show()); }
-    hideEdgeLabel() { this._edges.forEach((edge: Edge) => edge.defaultLabel.hide()); }
+    showVertexLabel() { this._vertices.forEach((vertex: Vertex) => vertex.label.show()); }
+    hideVertexLabel() { this._vertices.forEach((vertex: Vertex) => vertex.label.hide()); }
+    showEdgeLabel() { this._edges.forEach((edge: Edge) => edge.label.show()); }
+    hideEdgeLabel() { this._edges.forEach((edge: Edge) => edge.label.hide()); }
+
+    addToMisc(m: Two.Object) {
+        this._layers!["M"].add(m);
+    }
+
+    removeFromMisc(m: Two.Object) {
+        this._layers!["M"].remove(m);
+    }
 
     add(node: Component) {
         if (!this._initialized) {
@@ -221,8 +231,8 @@ export class Canvas extends DrawableCanvas {
         }
         this._layers![node.type].add(node.skin!);
 
-        if (node.defaultLabel) {
-            this.add(node.defaultLabel as Component);
+        if (node.label) {
+            this.add(node.label as Component);
         }
     }
 
@@ -231,8 +241,8 @@ export class Canvas extends DrawableCanvas {
             throw Error("The canvas was not initialized! (missing appendTo?)");
         }
 
-        if (node.defaultLabel) {
-            this.remove(node.defaultLabel as Component);
+        if (node.label) {
+            this.remove(node.label as Component);
         }
 
         if (node.type == DrawableNodeType.Vertex) {
@@ -247,14 +257,14 @@ export class Canvas extends DrawableCanvas {
             (node as Edge).endVertex.skin!.translation
                 .unbind(CompatibleEvents.change, (node as Edge).endVertexHandler);
             this._edges.splice(this._edges.indexOf(node as Edge), 1);
-        } else if (node.type == DrawableNodeType.Text && node instanceof CoordLabel) {
-            (node as CoordLabel).owner!.skin!.translation
-                .unbind(CompatibleEvents.change, (node as CoordLabel).handler);
-        } else if (node.type == DrawableNodeType.Text && node instanceof WeightLabel) {
-            ((node as WeightLabel).owner! as Edge).startVertex.skin!.translation
-                .unbind(CompatibleEvents.change, (node as WeightLabel).handler);
-            ((node as WeightLabel).owner! as Edge).endVertex.skin!.translation
-                .unbind(CompatibleEvents.change, (node as WeightLabel).handler);
+        } else if (node.type == DrawableNodeType.Label && (node as ComponentLabel).owner instanceof Vertex) {
+            (node as ComponentLabel).owner!.skin!.translation
+                .unbind(CompatibleEvents.change, (node as ComponentLabel).handler);
+        } else if (node.type == DrawableNodeType.Label && (node as ComponentLabel).owner instanceof Edge) {
+            ((node as ComponentLabel).owner! as Edge).startVertex.skin!.translation
+                .unbind(CompatibleEvents.change, (node as ComponentLabel).handler);
+            ((node as ComponentLabel).owner! as Edge).endVertex.skin!.translation
+                .unbind(CompatibleEvents.change, (node as ComponentLabel).handler);
         }
 
         this._layers![node.type].remove(node.skin!);

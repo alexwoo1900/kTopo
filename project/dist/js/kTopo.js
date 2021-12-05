@@ -471,13 +471,13 @@ var DrawableNodeType;
 (function (DrawableNodeType) {
     DrawableNodeType["Vertex"] = "V";
     DrawableNodeType["Edge"] = "E";
-    DrawableNodeType["Text"] = "T";
+    DrawableNodeType["Label"] = "L";
     DrawableNodeType["Widget"] = "W";
 })(DrawableNodeType || (DrawableNodeType = {}));
 class DrawableNode extends _AdjGraph__WEBPACK_IMPORTED_MODULE_0__.AdjNode {
     constructor(type) {
         super();
-        this.defaultLabel = null;
+        this.label = null;
         this._canvas = null;
         this._skin = null;
         this._style = {};
@@ -890,10 +890,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Grid__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./Grid */ 314);
 /* harmony import */ var _Vertex__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./Vertex */ 184);
 /* harmony import */ var _Edge__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./Edge */ 94);
-/* harmony import */ var _Text__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./Text */ 187);
-/* harmony import */ var _physics_2d_particle_ForceGenerator__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../../../physics/2d/particle/ForceGenerator */ 22);
-/* harmony import */ var _physics_2d_particle_Springforce__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../../../physics/2d/particle/Springforce */ 142);
-
+/* harmony import */ var _physics_2d_particle_ForceGenerator__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../../../physics/2d/particle/ForceGenerator */ 22);
+/* harmony import */ var _physics_2d_particle_Springforce__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../../../physics/2d/particle/Springforce */ 142);
 
 
 
@@ -940,7 +938,7 @@ class Canvas extends _DrawableCanvas__WEBPACK_IMPORTED_MODULE_6__.DrawableCanvas
         this._panStartPos = null;
         this.dragStartVertex = null;
         this.dragEndVertex = null;
-        this._registry = new _physics_2d_particle_ForceGenerator__WEBPACK_IMPORTED_MODULE_12__.ParticleForceRegistry();
+        this._registry = new _physics_2d_particle_ForceGenerator__WEBPACK_IMPORTED_MODULE_11__.ParticleForceRegistry();
         this._panStart = (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -1003,9 +1001,10 @@ class Canvas extends _DrawableCanvas__WEBPACK_IMPORTED_MODULE_6__.DrawableCanvas
         this._zui = new two_js__WEBPACK_IMPORTED_MODULE_0__["default"].ZUI(this._two.scene);
         this._zui.addLimits(0.06, 8);
         this._layers = {
+            "M": this._two.makeGroup(),
             "E": this._two.makeGroup(),
             "V": this._two.makeGroup(),
-            "T": this._two.makeGroup(),
+            "L": this._two.makeGroup(),
             "W": this._two.makeGroup(),
         };
         this._initialized = true;
@@ -1040,10 +1039,16 @@ class Canvas extends _DrawableCanvas__WEBPACK_IMPORTED_MODULE_6__.DrawableCanvas
             }
         }, false);
     }
-    showVertexLabel() { this._vertices.forEach((vertex) => vertex.defaultLabel.show()); }
-    hideVertexLabel() { this._vertices.forEach((vertex) => vertex.defaultLabel.hide()); }
-    showEdgeLabel() { this._edges.forEach((edge) => edge.defaultLabel.show()); }
-    hideEdgeLabel() { this._edges.forEach((edge) => edge.defaultLabel.hide()); }
+    showVertexLabel() { this._vertices.forEach((vertex) => vertex.label.show()); }
+    hideVertexLabel() { this._vertices.forEach((vertex) => vertex.label.hide()); }
+    showEdgeLabel() { this._edges.forEach((edge) => edge.label.show()); }
+    hideEdgeLabel() { this._edges.forEach((edge) => edge.label.hide()); }
+    addToMisc(m) {
+        this._layers["M"].add(m);
+    }
+    removeFromMisc(m) {
+        this._layers["M"].remove(m);
+    }
     add(node) {
         if (!this._initialized) {
             throw Error("The canvas was not initialized! (missing appendTo?)");
@@ -1054,7 +1059,7 @@ class Canvas extends _DrawableCanvas__WEBPACK_IMPORTED_MODULE_6__.DrawableCanvas
                 this._graph.add(node);
                 this._vertices.push(node);
                 if (this.usePhysicsEngine) {
-                    let fg = new _physics_2d_particle_Springforce__WEBPACK_IMPORTED_MODULE_13__.ParticleAnchoredSpring(node.originalPosition, 100, 0);
+                    let fg = new _physics_2d_particle_Springforce__WEBPACK_IMPORTED_MODULE_12__.ParticleAnchoredSpring(node.originalPosition, 100, 0);
                     let p = node.body;
                     this._registry.add(p, fg);
                 }
@@ -1068,16 +1073,16 @@ class Canvas extends _DrawableCanvas__WEBPACK_IMPORTED_MODULE_6__.DrawableCanvas
                 break;
         }
         this._layers[node.type].add(node.skin);
-        if (node.defaultLabel) {
-            this.add(node.defaultLabel);
+        if (node.label) {
+            this.add(node.label);
         }
     }
     remove(node) {
         if (!this._initialized) {
             throw Error("The canvas was not initialized! (missing appendTo?)");
         }
-        if (node.defaultLabel) {
-            this.remove(node.defaultLabel);
+        if (node.label) {
+            this.remove(node.label);
         }
         if (node.type == _DrawableNode__WEBPACK_IMPORTED_MODULE_7__.DrawableNodeType.Vertex) {
             let adjNodes = this._graph.getAdjNodes(node);
@@ -1093,11 +1098,11 @@ class Canvas extends _DrawableCanvas__WEBPACK_IMPORTED_MODULE_6__.DrawableCanvas
                 .unbind(CompatibleEvents.change, node.endVertexHandler);
             this._edges.splice(this._edges.indexOf(node), 1);
         }
-        else if (node.type == _DrawableNode__WEBPACK_IMPORTED_MODULE_7__.DrawableNodeType.Text && node instanceof _Text__WEBPACK_IMPORTED_MODULE_11__.CoordLabel) {
+        else if (node.type == _DrawableNode__WEBPACK_IMPORTED_MODULE_7__.DrawableNodeType.Label && node.owner instanceof _Vertex__WEBPACK_IMPORTED_MODULE_9__.Vertex) {
             node.owner.skin.translation
                 .unbind(CompatibleEvents.change, node.handler);
         }
-        else if (node.type == _DrawableNode__WEBPACK_IMPORTED_MODULE_7__.DrawableNodeType.Text && node instanceof _Text__WEBPACK_IMPORTED_MODULE_11__.WeightLabel) {
+        else if (node.type == _DrawableNode__WEBPACK_IMPORTED_MODULE_7__.DrawableNodeType.Label && node.owner instanceof _Edge__WEBPACK_IMPORTED_MODULE_10__.Edge) {
             node.owner.startVertex.skin.translation
                 .unbind(CompatibleEvents.change, node.handler);
             node.owner.endVertex.skin.translation
@@ -1326,14 +1331,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DrawableNode__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../DrawableNode */ 595);
 /* harmony import */ var _DrawableCanvas__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../DrawableCanvas */ 889);
 /* harmony import */ var _Canvas__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Canvas */ 54);
-/* harmony import */ var _Text__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Text */ 187);
+/* harmony import */ var _Label__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Label */ 839);
 
 
 
 
 let defaultStyle = {
     normal: {
-        stroke: "#ccc",
+        stroke: "#cccccc",
         lineWidth: 6,
         cap: "round"
     },
@@ -1345,28 +1350,23 @@ class Edge extends _DrawableNode__WEBPACK_IMPORTED_MODULE_0__.DrawableNode {
     constructor(v1, v2) {
         super(_DrawableNode__WEBPACK_IMPORTED_MODULE_0__.DrawableNodeType.Edge);
         this._innerLine = null;
+        this._name = "";
         this._weight = 1;
         this._canvas = null;
         this._skin = null;
         this._style = null;
-        this.defaultLabel = new _Text__WEBPACK_IMPORTED_MODULE_3__.WeightLabel(this);
+        this.label = new _Label__WEBPACK_IMPORTED_MODULE_3__.ComponentLabel(this);
         this.startVertex = v1;
         this.endVertex = v2;
         this.startVertexHandler = () => this._innerLine.vertices[0].copy(this.startVertex.skin.translation);
         this.endVertexHandler = () => this._innerLine.vertices[1].copy(this.endVertex.skin.translation);
     }
-    get weight() {
-        return this._weight;
-    }
-    set weight(value) {
-        this._weight = value;
-    }
-    get skin() {
-        return this._skin;
-    }
-    get neighbours() {
-        return this._canvas.getNeighbours(this);
-    }
+    get name() { return this._name; }
+    get weight() { return this._weight; }
+    get skin() { return this._skin; }
+    get neighbours() { return this._canvas.getNeighbours(this); }
+    set name(s) { this._name = s; }
+    set weight(value) { this._weight = value; }
     _loadDefaultStyle() {
         this._style = defaultStyle;
     }
@@ -1459,17 +1459,15 @@ class Grid {
 
 /***/ }),
 
-/***/ 187:
-/*!*********************************************!*\
-  !*** ./src/paint/two.js/components/Text.ts ***!
-  \*********************************************/
+/***/ 839:
+/*!**********************************************!*\
+  !*** ./src/paint/two.js/components/Label.ts ***!
+  \**********************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "LabelType": () => (/* binding */ LabelType),
-/* harmony export */   "CoordLabel": () => (/* binding */ CoordLabel),
-/* harmony export */   "WeightLabel": () => (/* binding */ WeightLabel)
+/* harmony export */   "ComponentLabel": () => (/* binding */ ComponentLabel)
 /* harmony export */ });
 /* harmony import */ var two_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! two.js */ 770);
 /* harmony import */ var _DrawableNode__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../DrawableNode */ 595);
@@ -1477,11 +1475,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var LabelType;
-(function (LabelType) {
-    LabelType[LabelType["Coord"] = 0] = "Coord";
-    LabelType[LabelType["Weight"] = 1] = "Weight";
-})(LabelType || (LabelType = {}));
 let defaultStyle = {
     normal: {
         offsetX: 0,
@@ -1490,7 +1483,7 @@ let defaultStyle = {
 };
 class Label extends _DrawableNode__WEBPACK_IMPORTED_MODULE_1__.DrawableNode {
     constructor() {
-        super(_DrawableNode__WEBPACK_IMPORTED_MODULE_1__.DrawableNodeType.Text);
+        super(_DrawableNode__WEBPACK_IMPORTED_MODULE_1__.DrawableNodeType.Label);
         this._canvas = null;
         this._skin = null;
         this._style = null;
@@ -1510,10 +1503,11 @@ class Label extends _DrawableNode__WEBPACK_IMPORTED_MODULE_1__.DrawableNode {
         this._skin.opacity = 0;
     }
 }
-class CoordLabel extends Label {
+class ComponentLabel extends Label {
     constructor(owner) {
         super();
         this._owner = null;
+        this._useDefaultLabel = false;
         this._owner = owner;
     }
     get owner() {
@@ -1523,62 +1517,63 @@ class CoordLabel extends Label {
         this._style = defaultStyle;
     }
     _createSkin() {
-        let style = this._style.normal;
-        let pos = this._owner.position;
-        let text = "(" + Math.round(pos.x) + ", " + Math.round(pos.y) + ")";
-        this._label = new two_js__WEBPACK_IMPORTED_MODULE_0__["default"].Text(text, pos.x + style.offsetX, pos.y + style.offsetY);
+        let text;
+        if (this._owner.type == _DrawableNode__WEBPACK_IMPORTED_MODULE_1__.DrawableNodeType.Vertex) {
+            let pos = this._owner.position;
+            if (this._owner.name != "") {
+                text = this._owner.name;
+            }
+            else {
+                text = "(" + Math.round(pos.x) + ", " + Math.round(pos.y) + ")";
+                this._useDefaultLabel = true;
+            }
+            let style = this._style.normal;
+            this._label = new two_js__WEBPACK_IMPORTED_MODULE_0__["default"].Text(text, pos.x + style.offsetX, pos.y + style.offsetY);
+        }
+        else if (this._owner.type == _DrawableNode__WEBPACK_IMPORTED_MODULE_1__.DrawableNodeType.Edge) {
+            if (this._owner.name != "") {
+                text = this._owner.name;
+            }
+            else {
+                text = this._owner.weight.toString();
+                this._useDefaultLabel = true;
+            }
+            let targetPos = this._owner.startVertex.position.add(this._owner.endVertex.position).imul(0.5);
+            let targetDel = this._owner.endVertex.position.sub(this._owner.startVertex.position);
+            let radian = Math.atan(targetDel.y / targetDel.x);
+            this._label = new two_js__WEBPACK_IMPORTED_MODULE_0__["default"].Text(text, targetPos.x, targetPos.y);
+            this._label.rotation = radian;
+        }
         this._skin = this._canvas.two.makeGroup(this._label);
         this._canvas.two.update();
     }
     _registerHandler() {
-        let style = this._style.normal;
-        let ownerSkin = this._owner.skin;
-        this._handler = () => {
-            this._label.value = "(" + Math.round(ownerSkin.translation.x) + ", " + Math.round(ownerSkin.translation.y) + ")";
-            this._label.translation.x = ownerSkin.translation.x + style.offsetX;
-            this._label.translation.y = ownerSkin.translation.y + style.offsetY;
-        };
-        ownerSkin.translation
-            .bind(_Canvas__WEBPACK_IMPORTED_MODULE_2__.CompatibleEvents.change, this._handler);
-    }
-}
-class WeightLabel extends Label {
-    constructor(owner) {
-        super();
-        this._owner = null;
-        this._owner = owner;
-    }
-    get owner() {
-        return this._owner;
-    }
-    get sprite() {
-        return this._skin;
-    }
-    _loadDefaultStyle() {
-        this._style = defaultStyle;
-    }
-    _createSkin() {
-        let weightText = this._owner.weight.toString();
-        let targetPos = this._owner.startVertex.position.add(this._owner.endVertex.position).imul(0.5);
-        let targetDel = this._owner.endVertex.position.sub(this._owner.startVertex.position);
-        let radian = Math.atan(targetDel.y / targetDel.x);
-        this._label = new two_js__WEBPACK_IMPORTED_MODULE_0__["default"].Text(weightText, targetPos.x, targetPos.y);
-        this._label.rotation = radian;
-        this._skin = this._canvas.two.makeGroup(this._label);
-        this._canvas.two.update();
-    }
-    _registerHandler() {
-        let ownerStartSkin = this._owner.startVertex.skin.translation;
-        let ownEndSkin = this._owner.endVertex.skin.translation;
-        this._handler = () => {
-            this._label.translation.x = (ownerStartSkin.x + ownEndSkin.x) * 0.5;
-            this._label.translation.y = (ownerStartSkin.y + ownEndSkin.y) * 0.5;
-            this._label.rotation = Math.atan((ownEndSkin.y - ownerStartSkin.y) / (ownEndSkin.x - ownerStartSkin.x));
-        };
-        ownerStartSkin
-            .bind(_Canvas__WEBPACK_IMPORTED_MODULE_2__.CompatibleEvents.change, this._handler);
-        ownEndSkin
-            .bind(_Canvas__WEBPACK_IMPORTED_MODULE_2__.CompatibleEvents.change, this._handler);
+        if (this._owner.type == _DrawableNode__WEBPACK_IMPORTED_MODULE_1__.DrawableNodeType.Vertex) {
+            let style = this._style.normal;
+            let ownerSkin = this._owner.skin;
+            this._handler = () => {
+                if (this._useDefaultLabel) {
+                    this._label.value = "(" + Math.round(ownerSkin.translation.x) + ", " + Math.round(ownerSkin.translation.y) + ")";
+                }
+                this._label.translation.x = ownerSkin.translation.x + style.offsetX;
+                this._label.translation.y = ownerSkin.translation.y + style.offsetY;
+            };
+            ownerSkin.translation
+                .bind(_Canvas__WEBPACK_IMPORTED_MODULE_2__.CompatibleEvents.change, this._handler);
+        }
+        else if (this._owner.type == _DrawableNode__WEBPACK_IMPORTED_MODULE_1__.DrawableNodeType.Edge) {
+            let ownerStartSkin = this._owner.startVertex.skin.translation;
+            let ownEndSkin = this._owner.endVertex.skin.translation;
+            this._handler = () => {
+                this._label.translation.x = (ownerStartSkin.x + ownEndSkin.x) * 0.5;
+                this._label.translation.y = (ownerStartSkin.y + ownEndSkin.y) * 0.5;
+                this._label.rotation = Math.atan((ownEndSkin.y - ownerStartSkin.y) / (ownEndSkin.x - ownerStartSkin.x));
+            };
+            ownerStartSkin
+                .bind(_Canvas__WEBPACK_IMPORTED_MODULE_2__.CompatibleEvents.change, this._handler);
+            ownEndSkin
+                .bind(_Canvas__WEBPACK_IMPORTED_MODULE_2__.CompatibleEvents.change, this._handler);
+        }
     }
 }
 
@@ -1602,7 +1597,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DrawableNode__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../../DrawableNode */ 595);
 /* harmony import */ var _DrawableCanvas__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../../DrawableCanvas */ 889);
 /* harmony import */ var _Edge__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Edge */ 94);
-/* harmony import */ var _Text__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./Text */ 187);
+/* harmony import */ var _Label__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./Label */ 839);
 
 
 
@@ -1621,7 +1616,7 @@ let defaultStyle = {
         "fill": "#0099ff",
         "opacity": 1,
         "scale": 1,
-        "dlStroke": "#0099ff",
+        "dlStroke": "#cccccc",
         "dlLineWidth": 2,
         "dlCap": "round"
     },
@@ -1640,6 +1635,7 @@ class Vertex extends _DrawableNode__WEBPACK_IMPORTED_MODULE_4__.DrawableNode {
         this._style = null;
         this._usePhysicsEngine = true;
         this._applyPhysicsEngine = null;
+        this._name = "";
         this._dragStart = (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -1653,6 +1649,7 @@ class Vertex extends _DrawableNode__WEBPACK_IMPORTED_MODULE_4__.DrawableNode {
             else if (this._canvas.editMode == _DrawableCanvas__WEBPACK_IMPORTED_MODULE_5__.CanvasEditMode.InsertEdge) {
                 if (!this._dragLine) {
                     this.createOrUpdateDragLineSkin(this._canvas.two, this._style.normal, this.x, this.y, sf.x, sf.y);
+                    this._canvas.addToMisc(this._dragLine);
                 }
                 else {
                     this._dragLine.vertices[1].set(sf.x, sf.y);
@@ -1688,7 +1685,7 @@ class Vertex extends _DrawableNode__WEBPACK_IMPORTED_MODULE_4__.DrawableNode {
                 this._canvas.dragStartVertex = null;
                 this._canvas.dragEndVertex = null;
                 if (this._dragLine) {
-                    this._canvas.two.remove(this._dragLine);
+                    this._canvas.removeFromMisc(this._dragLine);
                     this._dragLine = null;
                 }
             }
@@ -1699,7 +1696,7 @@ class Vertex extends _DrawableNode__WEBPACK_IMPORTED_MODULE_4__.DrawableNode {
                 this._canvas.two.bind("update", this._applyPhysicsEngine);
             }
         };
-        this.defaultLabel = new _Text__WEBPACK_IMPORTED_MODULE_7__.CoordLabel(this);
+        this.label = new _Label__WEBPACK_IMPORTED_MODULE_7__.ComponentLabel(this);
         this.originalPosition = new _Base__WEBPACK_IMPORTED_MODULE_2__.Point2D(x, y);
         this.body = new _physics_2d_particle_Particle__WEBPACK_IMPORTED_MODULE_3__.Particle();
         this.body.position.set(x, y);
@@ -1708,8 +1705,10 @@ class Vertex extends _DrawableNode__WEBPACK_IMPORTED_MODULE_4__.DrawableNode {
     get x() { return this.body.position.x; }
     get y() { return this.body.position.y; }
     get position() { return this.body.position; }
+    get name() { return this._name; }
     get neighbours() { return this._canvas.getNeighbours(this); }
     get usePhysicsEngine() { return this._usePhysicsEngine; }
+    set name(s) { this._name = s; }
     set usePhysicsEngine(v) { this._usePhysicsEngine = v; }
     _loadDefaultStyle() {
         this._style = defaultStyle;
@@ -20211,7 +20210,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _paint_two_js_components_Grid__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./paint/two.js/components/Grid */ 314);
 /* harmony import */ var _paint_two_js_components_Vertex__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./paint/two.js/components/Vertex */ 184);
 /* harmony import */ var _paint_two_js_components_Edge__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./paint/two.js/components/Edge */ 94);
-/* harmony import */ var _paint_two_js_components_Text__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./paint/two.js/components/Text */ 187);
+/* harmony import */ var _paint_two_js_components_Label__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./paint/two.js/components/Label */ 839);
 /* harmony import */ var _paint_two_js_misc_Widget__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./paint/two.js/misc/Widget */ 201);
 
 
@@ -20227,8 +20226,7 @@ let kTopo = {
     Grid: _paint_two_js_components_Grid__WEBPACK_IMPORTED_MODULE_2__.Grid,
     Vertex: _paint_two_js_components_Vertex__WEBPACK_IMPORTED_MODULE_3__.Vertex,
     Edge: _paint_two_js_components_Edge__WEBPACK_IMPORTED_MODULE_4__.Edge,
-    CoordLabel: _paint_two_js_components_Text__WEBPACK_IMPORTED_MODULE_5__.CoordLabel,
-    WeightLabel: _paint_two_js_components_Text__WEBPACK_IMPORTED_MODULE_5__.WeightLabel,
+    ComponentLabel: _paint_two_js_components_Label__WEBPACK_IMPORTED_MODULE_5__.ComponentLabel,
     Button: _paint_two_js_misc_Widget__WEBPACK_IMPORTED_MODULE_6__.Button
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (kTopo);

@@ -4,7 +4,7 @@ import { DrawableNodeType, DrawableNode } from "../../../DrawableNode";
 import { CanvasEditMode } from "../../../DrawableCanvas";
 import { CompatibleEvents, Canvas } from "./Canvas";
 import { Vertex } from "./Vertex";
-import { WeightLabel } from "./Text";
+import { ComponentLabel } from "./Label";
 
 
 interface EdgeStyle {
@@ -20,7 +20,7 @@ interface Style {
 
 let defaultStyle = {
     normal: {
-        stroke: "#ccc",
+        stroke: "#cccccc",
         lineWidth: 6,
         cap: "round"
     },
@@ -30,13 +30,14 @@ let defaultStyle = {
 }
 
 export class Edge extends DrawableNode {
-    readonly defaultLabel       : WeightLabel;
+    readonly label              : ComponentLabel;
     readonly startVertex        : Vertex;
     readonly endVertex          : Vertex;
     readonly startVertexHandler : (() => any);
     readonly endVertexHandler   : (() => any);
     
     private _innerLine          : Two.Line | null   = null;
+    private _name               : string            = "";
     private _weight             : number            = 1;
 
     protected _canvas           : Canvas | null     = null;
@@ -46,28 +47,20 @@ export class Edge extends DrawableNode {
 
     constructor(v1: Vertex, v2: Vertex) {
         super(DrawableNodeType.Edge);
-        this.defaultLabel = new WeightLabel(this);
+        this.label = new ComponentLabel(this);
         this.startVertex = v1;
         this.endVertex = v2;
         this.startVertexHandler = () => this._innerLine!.vertices[0].copy(this.startVertex.skin!.translation);
         this.endVertexHandler = () => this._innerLine!.vertices[1].copy(this.endVertex.skin!.translation);
     }
 
-    get weight(): number {
-        return this._weight;
-    }
+    get name(): string { return this._name; }
+    get weight(): number { return this._weight; }
+    get skin(): Two.Group | null { return this._skin; }
+    get neighbours(): AdjNode[] { return this._canvas!.getNeighbours(this); }
 
-    set weight(value: number) {
-        this._weight = value;
-    }
-
-    get skin(): Two.Group | null {
-        return this._skin;
-    }
-
-    get neighbours(): AdjNode[] {
-        return this._canvas!.getNeighbours(this);
-    }
+    set name(s: string) { this._name = s; }
+    set weight(value: number) { this._weight = value; }
 
     _loadDefaultStyle() {
         this._style = defaultStyle;

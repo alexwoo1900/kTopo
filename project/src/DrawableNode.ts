@@ -4,16 +4,16 @@ import { DrawableCanvas } from "./DrawableCanvas";
 export enum DrawableNodeType {
     Vertex  = "V",
     Edge    = "E",
-    Text    = "T",
+    Label   = "L",
     Widget  = "W"
 }
 
 export class DrawableNode extends AdjNode {
 
     readonly type           : DrawableNodeType;
-    readonly defaultLabel   : unknown                   = null;
+    readonly label          : unknown                   = null;
     protected _canvas       : DrawableCanvas | null     = null;
-    protected _skin       : unknown                   = null;
+    protected _skin         : unknown                   = null;
     protected _style        : unknown                   = {};
     protected _initialized  : boolean                   = false;
 
